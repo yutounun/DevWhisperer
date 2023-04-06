@@ -6,6 +6,7 @@ import { documentToPlainTextString } from '@contentful/rich-text-plain-text-rend
 import { BLOCKS } from '@contentful/rich-text-types'
 import { GatsbyImage, getImage } from 'gatsby-plugin-image'
 import readingTime from 'reading-time'
+import MarkdownRenderer from '../components/markdown-renderer'
 
 import Seo from '../components/seo'
 import Layout from '../components/layout'
@@ -23,20 +24,15 @@ class BlogPostTemplate extends React.Component {
     )
     const plainTextBody = documentToPlainTextString(JSON.parse(post.body.raw))
     const { minutes: timeToRead } = readingTime(plainTextBody)
-    
+
     const options = {
       renderNode: {
         [BLOCKS.EMBEDDED_ASSET]: (node) => {
-        const { gatsbyImage, description } = node.data.target
-        return (
-           <GatsbyImage
-              image={getImage(gatsbyImage)}
-              alt={description}
-           />
-         )
+          const { gatsbyImage, description } = node.data.target
+          return <GatsbyImage image={getImage(gatsbyImage)} alt={description} />
         },
       },
-    };
+    }
 
     return (
       <Layout location={this.props.location}>
@@ -57,6 +53,10 @@ class BlogPostTemplate extends React.Component {
             {timeToRead} minute read
           </span>
           <div className={styles.article}>
+            <div>
+              {/* マークダウンコンポーネントを使って、マークダウンをレンダリングします */}
+              <MarkdownRenderer markdown={post.markdown.markdown} />
+            </div>
             <div className={styles.body}>
               {post.body?.raw && renderRichText(post.body, options)}
             </div>
@@ -104,6 +104,9 @@ export const pageQuery = graphql`
       }
       publishDate(formatString: "MMMM Do, YYYY")
       rawDate: publishDate
+      markdown {
+        markdown
+      }
       heroImage {
         gatsbyImage(layout: FULL_WIDTH, placeholder: BLURRED, width: 1280)
         resize(height: 630, width: 1200) {
@@ -112,7 +115,6 @@ export const pageQuery = graphql`
       }
       body {
         raw
-        
       }
       tags
       description {
